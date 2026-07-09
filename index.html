@@ -58,16 +58,57 @@
             transition: transform 0.2s ease;
         }
 
-        /* 裝備外殼 (基礎 100% 大小) */
+        /* 裝備主外殼 (寬度固定 460px) */
         .equipment-wrapper {
             position: relative;
             width: 460px;
-            height: 504px;
-            background-image: url('螢幕擷取畫面 2026-07-09 101829.jpg');
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* 分頁內容基礎樣式 */
+        .tab-content {
+            display: none; /* 預設隱藏 */
+            position: relative;
+            width: 100%;
             background-size: 100% 100%;
             background-repeat: no-repeat;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+        
+        /* 作用中的分頁顯示 */
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 裝備分頁高度與底圖 */
+        #tab-equip {
+            height: 504px;
+            background-image: url('螢幕擷取畫面 2026-07-09 101829.jpg');
+        }
+
+        /* 時裝分頁高度與底圖 (依原圖比例 1:1 調整高度為 460px) */
+        #tab-coord {
+            height: 460px; 
+            background-image: url('螢幕擷取畫面 2026-07-09 153219.jpg');
+        }
+
+        /* 右上角切換按鈕 (透明覆蓋在原圖按鈕上) */
+        .tab-toggle-btn {
+            position: absolute;
+            top: 3%;
+            right: 4%;
+            width: 26%;
+            height: 6.5%;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0); /* 透明 */
+            border: 2px solid transparent;
+            border-radius: 15px;
+            z-index: 90;
+        }
+        .tab-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
         /* 裝備格子樣式 */
@@ -78,8 +119,18 @@
             border: 2px solid transparent;
             border-radius: 4px;
             z-index: 10;
+        }
+        
+        /* 裝備分頁的格子尺寸 */
+        #tab-equip .slot {
             width: 12.3%;
             height: 11.2%;
+        }
+
+        /* 時裝分頁的格子尺寸 (比例微調) */
+        #tab-coord .slot {
+            width: 12.3%;
+            height: 12.3%;
         }
         
         .slot:hover {
@@ -152,6 +203,12 @@
             top: 50%;
             transform: translateY(-40%);
         }
+        /* 時裝最下排三個格子的浮動選單向上彈出，避免被遮擋 */
+        .slot.side-bottom .tooltip {
+            bottom: 108%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
 
         .tooltip-title {
             font-size: 14px;
@@ -212,7 +269,7 @@
         }
 
         /* ==========================================================
-           24 個裝備格子完美對齊底圖坐標校正
+           [分頁一] 24 個裝備格子對齊坐標
            ========================================================== */
         .s-ring1 { top: 10.5%; left: 4.3%; }
         .s-pendant1 { top: 22.5%; left: 4.3%; }
@@ -243,6 +300,32 @@
         .s-android { top: 46.5%; left: 83.5%; }
         .s-heart { top: 58.5%; left: 83.5%; }
         .s-medal { top: 70.5%; left: 83.5%; }
+
+        /* ==========================================================
+           [分頁二] 15 個時裝(裝飾)格子對齊坐標 (已修正眼飾分區)
+           ========================================================== */
+        .c-hair { top: 11.8%; left: 4.3%; }
+		.c-empty-top { top: 11.8%; left: 17.5%; } /* 這是新增的格子 */
+        .c-cap { top: 11.8%; left: 70.2%; }
+        .c-coat { top: 11.8%; left: 83.5%; }
+
+        .c-face { top: 24.8%; left: 4.3%; }
+        .c-eye { top: 24.8%; left: 17.5%; } /* 已獨立出來的眼飾 */
+        .c-cloth { top: 24.8%; left: 70.2%; }
+        .c-glove { top: 24.8%; left: 83.5%; }
+
+        .c-ear { top: 37.8%; left: 4.3%; }
+        .c-pendant { top: 37.8%; left: 17.5%; }
+        .c-pants { top: 37.8%; left: 70.2%; }
+        .c-shoes { top: 37.8%; left: 83.5%; }
+
+        .c-tail { top: 50.8%; left: 4.3%; }
+        .c-weapon { top: 50.8%; left: 70.2%; }
+        .c-shield { top: 50.8%; left: 83.5%; }
+
+        .c-sub1 { top: 63.8%; left: 30.8%; }
+        .c-sub2 { top: 63.8%; left: 44.1%; }
+        .c-sub3 { top: 63.8%; left: 57.4%; }
     </style>
 </head>
 <body>
@@ -260,7 +343,17 @@
     <br>
 
     <div class="scale-container" id="scaleContainer">
-        <div class="equipment-wrapper" id="equipmentWrapper"></div>
+        <div class="equipment-wrapper" id="equipmentWrapper">
+            
+            <div class="tab-content active" id="tab-equip">
+                <div class="tab-toggle-btn" onclick="switchTab('tab-coord')"></div>
+            </div>
+
+            <div class="tab-content" id="tab-coord">
+                <div class="tab-toggle-btn" onclick="switchTab('tab-equip')"></div>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -271,185 +364,115 @@
             buttonElement.classList.add('active');
         }
 
-        /* 裝備資料庫說明：
-           - 現在每個裝備新增了「h1, h2, h3」欄位，用來設定個別選單的頂端標題！
-           - 如果某個選項內容為 "無其他推薦"，系統會聰明地自動將該選項完全隱藏，不佔網頁空間。
-        */
+        // 分頁切換函式
+        function switchTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        /* 裝備資料庫 */
         const slotData = [
-            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", 
-              h1: "① 入門or選用配置", t1: "黎明守護者天使戒指", 
-              h2: "② 當前主流配置", t2: "巨大的恐懼", 
-              h3: "③ 畢業裝備", t3: "根源的耳語" },
-            
-            { id: "pendant1", prefix: "B", name: "戒指 2", side: "side-left", cls: "s-pendant1", 
-              h1: "① 入門or選用配置", t1: "屬性的戒指", 
-              h2: "② 當前主流配置", t2: "天上的氣息", 
-              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
-            
-            { id: "ring2", prefix: "C", name: "戒指 3", side: "side-left", cls: "s-ring2", 
-              h1: "① 塔戒擇一選用(搭配切換技能)", t1: "規範戒指(塔戒)", 
-              h2: "② 塔戒擇一選用(搭配切換技能)", t2: "永續戒指(塔戒)", 
-              h3: "③ 未來展望(改版)", t3: "恍惚的噩夢(未出)" },
-            
-            { id: "ring3", prefix: "D", name: "戒指 4", side: "side-left", cls: "s-ring3", 
-              h1: "① 入門過渡配置", t1: "強力的魔性戒指", 
-              h2: "② 當前主流頂配", t2: "頂級培羅德戒指 強化+30", 
-              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
-            
-            { id: "belt", prefix: "E", name: "腰帶", side: "side-left", cls: "s-belt", 
-              h1: "① 入門過渡配置", t1: "頂級培羅德腰帶", 
-              h2: "② 當前主流/畢業裝備", t2: "夢幻的腰帶", 
-              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
-            
-            { id: "pocket", prefix: "F", name: "臉飾", side: "side-left", cls: "s-pocket", 
-              h1: "① 入門or選用配置", t1: "暮光印記", 
-              h2: "② 當前主流配置", t2: "口紅控制器標誌", 
-              h3: "③ 未來展望", t3: "傲慢的原罪(未出)" },
-            
-            { id: "face", prefix: "G", name: "眼飾", side: "side-left", cls: "s-face", 
-              h1: "① 當前主流配置", t1: "附有魔力的眼罩", 
-              h2: "② 未來展望", t2: "飢餓血怨(未出)", 
-              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
-            
-            { id: "eye", prefix: "H", name: "耳環", side: "side-left", cls: "s-eye", 
-              h1: "① 入門配置 1", t1: "星耀耳環", 
-              h2: "② 入門配置 2", t2: "頂級培羅德耳環", 
-              h3: "③ 當前主流/畢業裝備", t3: "指揮官力量耳環" },
-            
-            { id: "earring", prefix: "I", name: "項鍊 1", side: "side-left", cls: "s-earring", 
-              h1: "① 入門過渡配置", t1: "破曉墜飾", 
-              h2: "② 當前主流/畢業裝備", t2: "苦痛的根源", 
-              h3: "③ 套裝搭配首選", t3: "頂級培羅德項鍊 強化+30" },
-            
-            { id: "shoulder", prefix: "J", name: "項鍊 2", side: "side-left", cls: "s-shoulder", 
-              h1: "① 選用配置", t1: "死神的項鍊", 
-              h2: "② 套裝搭配首選", t2: "頂級培羅德項鍊 強化+30", 
-              h3: "③ 畢業裝備", t3: "死亡之誓" },
-            
-            { id: "book", prefix: "K", name: "口袋道具", side: "side-left", cls: "s-book", 
-              h1: "① 入門配置 1", t1: "查。克羅斯", 
-              h2: "② 入門配置 2", t2: "四個碎片的橘子裝飾", 
-              h3: "③ 當前主流/畢業裝備", t3: "四色魔島書" },
-            
-            { id: "weapon", prefix: "L", name: "主武器", side: "side-left", cls: "s-weapon", 
-              h1: "① 入門高CP值", t1: "神秘武器系列", 
-              h2: "② 當前主流配置", t2: "創世武器系列", 
-              h3: "③ 畢業裝備", t3: "命運武器系列" },
-            
-            { id: "subweapon", prefix: "M", name: "副武器", side: "side-right", cls: "s-subweapon", 
-              h1: "① 入門配置", t1: "100級副武系列", 
-              h2: "② 當前主流配置", t2: "140級濃姬附武系列", 
-              h3: "③ 未來頂配展望", t3: "200級星界附武系列(未出)" },
-            
-            { id: "emblem", prefix: "N", name: "能源/徽章", side: "side-right", cls: "s-emblem", 
-              h1: "① 入門配置 1", t1: "職業黃金徽章", 
-              h2: "② 入門配置 2", t2: "覺醒的記憶徽章", 
-              h3: "③ 畢業裝備", t3: "米特拉的憤怒" },
-            
-            { id: "hat", prefix: "O", name: "帽子", side: "side-right", cls: "s-hat", 
-              h1: "① 選用裝備", t1: "露塔必思(深淵)帽子系列", 
-              h2: "② 新手配置", t2: "神祕冥界帽子系列", 
-              h3: "③ 當前主流/畢業裝備", t3: "永恆帽子系列" },
-            
-            { id: "top", prefix: "P", name: "上衣", side: "side-right", cls: "s-top", 
-              h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", 
-              h2: "② 選用裝備", t2: "露塔必思(深淵)上衣系列", 
-              h3: "③ 當前主流/畢業裝備", t3: "永恆上衣系列" },
-            
-            { id: "bottom", prefix: "Q", name: "褲/裙", side: "side-right", cls: "s-bottom", 
-              h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", 
-              h2: "② 選用裝備", t2: "露塔必思(深淵)褲子系列", 
-              h3: "③ 當前主流/畢業裝備", t3: "永恆褲子系列" },
-            
-            { id: "cape", prefix: "R", name: "肩膀裝飾", side: "side-right", cls: "s-cape", 
-              h1: "① 選用裝備", t1: "航海師護肩系列", 
-              h2: "② 入門配置", t2: "神秘冥界護肩系列", 
-              h3: "③ 當前主流/畢業裝備", t3: "永恆肩膀系列" },
-            
-            { id: "badge", prefix: "S", name: "機器人", side: "side-right", cls: "s-badge", 
-              h1: "① 外觀自由搭配", t1: "任選機器人", 
-              h2: "② 外觀自由搭配", t2: "任選機器人", 
-              h3: "③ 外觀自由搭配", t3: "任選機器人" },
-            
-            { id: "glove", prefix: "T", name: "披風", side: "side-right", cls: "s-glove", 
-              h1: "① 選用裝備", t1: "航海師斗篷系列", 
-              h2: "② 當前主流裝備", t2: "神祕冥界斗篷系列", 
-              h3: "③ 畢業裝備", t3: "永恆斗篷系列" },
-            
-            { id: "shoe", prefix: "U", name: "手套", side: "side-right", cls: "s-shoe", 
-              h1: "① 選用裝備", t1: "航海師手套系列", 
-              h2: "② 當前主流裝備", t2: "神祕冥界手套系列", 
-              h3: "③ 畢業裝備", t3: "永恆手套系列" },
-            
-            { id: "empty-slot", prefix: "V", name: "鞋子", side: "side-right", cls: "s-empty-slot", 
-              h1: "① 選用裝備", t1: "航海師鞋子系列", 
-              h2: "② 當前主流裝備", t2: "神祕冥界鞋子系列", 
-              h3: "③ 畢業裝備", t3: "永恆鞋子系列" },
-            
-            { id: "android", prefix: "W", name: "勳章", side: "side-right", cls: "s-android", 
-              h1: "① 階段一", t1: "喵喵天使強化+10", 
-              h2: "② 階段二", t2: "轉移公會勳章", 
-              h3: "③ 階段三", t3: "轉移不朽的遺產" },
-            
-            { id: "heart", prefix: "X", name: "機器心臟", side: "side-right", cls: "s-heart", 
-              h1: "① 高CP值裝備", t1: "女武神心臟", 
-              h2: "② 高階過渡配置", t2: "M-DAY心臟", 
-              h3: "③ 畢業裝備", t3: "全面控制核心" },
-            
-            { id: "medal", prefix: "Y", name: "胸章", side: "side-right", cls: "s-medal", 
-              h1: "① 階段一", t1: "VIP修菲凱曼的黃金胸章", 
-              h2: "② 階段二", t2: "轉移創世的胸章", 
-              h3: "③ 畢業裝備", t3: "無其他推薦" } // 此項會自動隱藏
+            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", h1: "① 入門or選用配置", t1: "黎明守護者天使戒指", h2: "② 當前主流配置", t2: "巨大的恐懼", h3: "③ 畢業裝備", t3: "根源的耳語" },
+            { id: "pendant1", prefix: "B", name: "戒指 2", side: "side-left", cls: "s-pendant1", h1: "① 入門or選用配置", t1: "屬性的戒指", h2: "② 當前主流配置", t2: "天上的氣息", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "ring2", prefix: "C", name: "戒指 3", side: "side-left", cls: "s-ring2", h1: "① 塔戒擇一選用(搭配切換技能)", t1: "規範戒指(塔戒)", h2: "② 塔戒擇一選用(搭配切換技能)", t2: "永續戒指(塔戒)", h3: "③ 未來展望(改版)", t3: "恍惚的噩夢(未出)" },
+            { id: "ring3", prefix: "D", name: "戒指 4", side: "side-left", cls: "s-ring3", h1: "① 入門過渡配置", t1: "強力的魔性戒指", h2: "② 當前主流頂配", t2: "頂級培羅德戒指 強化+30", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "belt", prefix: "E", name: "腰帶", side: "side-left", cls: "s-belt", h1: "① 入門過渡配置", t1: "頂級培羅德腰帶", h2: "② 當前主流/畢業裝備", t2: "夢幻的腰帶", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "pocket", prefix: "F", name: "臉飾", side: "side-left", cls: "s-pocket", h1: "① 入門or選用配置", t1: "暮光印記", h2: "② 當前主流配置", t2: "口紅控制器標誌", h3: "③ 未來展望", t3: "傲慢的原罪(未出)" },
+            { id: "face", prefix: "G", name: "眼飾", side: "side-left", cls: "s-face", h1: "① 當前主流配置", t1: "附有魔力的眼罩", h2: "② 未來展望", t2: "飢餓血怨(未出)", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "eye", prefix: "H", name: "耳環", side: "side-left", cls: "s-eye", h1: "① 入門配置 1", t1: "星耀耳環", h2: "② 入門配置 2", t2: "頂級培羅德耳環", h3: "③ 當前主流/畢業裝備", t3: "指揮官力量耳環" },
+            { id: "earring", prefix: "I", name: "項鍊 1", side: "side-left", cls: "s-earring", h1: "① 入門過渡配置", t1: "破曉墜飾", h2: "② 當前主流/畢業裝備", t2: "苦痛的根源", h3: "③ 套裝搭配首選", t3: "頂級培羅德項鍊 強化+30" },
+            { id: "shoulder", prefix: "J", name: "項鍊 2", side: "side-left", cls: "s-shoulder", h1: "① 選用配置", t1: "死神的項鍊", h2: "② 套裝搭配首選", t2: "頂級培羅德項鍊 強化+30", h3: "③ 畢業裝備", t3: "死亡之誓" },
+            { id: "book", prefix: "K", name: "口袋道具", side: "side-left", cls: "s-book", h1: "① 入門配置 1", t1: "查。克羅斯", h2: "② 入門配置 2", t2: "四個碎片的橘子裝飾", h3: "③ 當前主流/畢業裝備", t3: "四色魔島書" },
+            { id: "weapon", prefix: "L", name: "主武器", side: "side-left", cls: "s-weapon", h1: "① 入門高CP值", t1: "神秘武器系列", h2: "② 當前主流配置", t2: "創世武器系列", h3: "③ 畢業裝備", t3: "命運武器系列" },
+            { id: "subweapon", prefix: "M", name: "副武器", side: "side-right", cls: "s-subweapon", h1: "① 入門配置", t1: "100級副武系列", h2: "② 當前主流配置", t2: "140級濃姬附武系列", h3: "③ 未來頂配展望", t3: "200級星界附武系列(未出)" },
+            { id: "emblem", prefix: "N", name: "能源/徽章", side: "side-right", cls: "s-emblem", h1: "① 入門配置 1", t1: "職業黃金徽章", h2: "② 入門配置 2", t2: "覺醒的記憶徽章", h3: "③ 畢業裝備", t3: "米特拉的憤怒" },
+            { id: "hat", prefix: "O", name: "帽子", side: "side-right", cls: "s-hat", h1: "① 選用裝備", t1: "露塔必思(深淵)帽子系列", h2: "② 新手配置", t2: "神祕冥界帽子系列", h3: "③ 當前主流/畢業裝備", t3: "永恆帽子系列" },
+            { id: "top", prefix: "P", name: "上衣", side: "side-right", cls: "s-top", h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", h2: "② 選用裝備", t2: "露塔必思(深淵)上衣系列", h3: "③ 當前主流/畢業裝備", t3: "永恆上衣系列" },
+            { id: "bottom", prefix: "Q", name: "褲/裙", side: "side-right", cls: "s-bottom", h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", h2: "② 選用裝備", t2: "露塔必思(深淵)褲子系列", h3: "③ 當前主流/畢業裝備", t3: "永恆褲子系列" },
+            { id: "cape", prefix: "R", name: "肩膀裝飾", side: "side-right", cls: "s-cape", h1: "① 選用裝備", t1: "航海師護肩系列", h2: "② 入門配置", t2: "神秘冥界護肩系列", h3: "③ 當前主流/畢業裝備", t3: "永恆肩膀系列" },
+            { id: "badge", prefix: "S", name: "機器人", side: "side-right", cls: "s-badge", h1: "① 外觀自由搭配", t1: "任選機器人", h2: "② 外觀自由搭配", t2: "任選機器人", h3: "③ 外觀自由搭配", t3: "任選機器人" },
+            { id: "glove", prefix: "T", name: "披風", side: "side-right", cls: "s-glove", h1: "① 選用裝備", t1: "航海師斗篷系列", h2: "② 當前主流裝備", t2: "神祕冥界斗篷系列", h3: "③ 畢業裝備", t3: "永恆斗篷系列" },
+            { id: "shoe", prefix: "U", name: "手套", side: "side-right", cls: "s-shoe", h1: "① 選用裝備", t1: "航海師手套系列", h2: "② 當前主流裝備", t2: "神祕冥界手套系列", h3: "③ 畢業裝備", t3: "永恆手套系列" },
+            { id: "empty-slot", prefix: "V", name: "鞋子", side: "side-right", cls: "s-empty-slot", h1: "① 選用裝備", t1: "航海師鞋子系列", h2: "② 當前主流裝備", t2: "神祕冥界鞋子系列", h3: "③ 畢業裝備", t3: "永恆鞋子系列" },
+            { id: "android", prefix: "W", name: "勳章", side: "side-right", cls: "s-android", h1: "① 階段一", t1: "喵喵天使強化+10", h2: "② 階段二", t2: "轉移公會勳章", h3: "③ 階段三", t3: "轉移不朽的遺產" },
+            { id: "heart", prefix: "X", name: "機器心臟", side: "side-right", cls: "s-heart", h1: "① 高CP值裝備", t1: "女武神心臟", h2: "② 高階過渡配置", t2: "M-DAY心臟", h3: "③ 畢業裝備", t3: "全面控制核心" },
+            { id: "medal", prefix: "Y", name: "胸章", side: "side-right", cls: "s-medal", h1: "① 階段一", t1: "VIP修菲凱曼的黃金胸章", h2: "② 階段二", t2: "轉移創世的胸章", h3: "③ 畢業裝備", t3: "無其他推薦" }
         ];
 
-        const wrapper = document.getElementById('equipmentWrapper');
-        
-        slotData.forEach(slot => {
-            // 檢查選項內容是否為 "無其他推薦"，如果是，將該選項的 HTML 設為空字串，後面就不會顯示
-            const opt1Html = slot.t1 === "無其他推薦" ? "" : `
-                <div class="option-item tier-1" onclick="equipItem('${slot.id}', '${slot.t1}', '#aaaaaa', '${slot.prefix}-1.png')">
-                    <span class="option-header">${slot.h1}</span>
-                    <div class="option-body">
-                        <div class="option-img" style="background-image: url('${slot.prefix}-1.png');"></div>
-                        <div class="option-text">${slot.t1}</div>
-                    </div>
-                </div>`;
-                
-            const opt2Html = slot.t2 === "無其他推薦" ? "" : `
-                <div class="option-item tier-2" onclick="equipItem('${slot.id}', '${slot.t2}', '#3498db', '${slot.prefix}-2.png')">
-                    <span class="option-header">${slot.h2}</span>
-                    <div class="option-body">
-                        <div class="option-img" style="background-image: url('${slot.prefix}-2.png');"></div>
-                        <div class="option-text">${slot.t2}</div>
-                    </div>
-                </div>`;
-                
-            const opt3Html = slot.t3 === "無其他推薦" ? "" : `
-                <div class="option-item tier-3" onclick="equipItem('${slot.id}', '${slot.t3}', '#e74c3c', '${slot.prefix}-3.png')">
-                    <span class="option-header">${slot.h3}</span>
-                    <div class="option-body">
-                        <div class="option-img" style="background-image: url('${slot.prefix}-3.png');"></div>
-                        <div class="option-text">${slot.t3}</div>
-                    </div>
-                </div>`;
+        /* 時裝(裝飾)資料庫 - 統一採用 CA-1, CA-2, CA-3 命名邏輯 */
+        const coordData = [
+            { id: "c-hair", prefix: "CA", name: "戒指1", side: "side-left", cls: "c-hair", h1: "① 入門選項", t1: "黑暗夜光黃金戒指", h2: "② 畢業裝備", t2: "內面暴風(點強後的凝聚使用鐵砧)", h3: "③ 畢業裝備", t3: "無其他推薦" },
+			{ id: "c-empty-top", prefix: "CE", name: "臉飾", side: "side-left", cls: "c-empty-top", h1: "① 畢業裝備1", t1: "強化厭煩咖波", h2: "② 畢業裝備2", t2: "強化哇屋咖波", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-eye", prefix: "CF", name: "眼飾", side: "side-left", cls: "c-eye", h1: "① 入門選項", t1: "活屍面具", h2: "② 畢業裝備", t2: "天照之眼", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-cap", prefix: "CH", name: "帽子", side: "side-right", cls: "c-cap", h1: "① 入門選項1", t1: "任意15屬性+15AD/AP帽子", h2: "② 畢業裝備", t2: "奇異的狐狸面具", h3: "③ 畢業裝備(惡魔復仇者)", t3: "露西亞帽子" },
+            { id: "c-coat", prefix: "CL", name: "披風", side: "side-right", cls: "c-coat", h1: "① 入門選項", t1: "蒼穹之翼", h2: "② 畢業裝備", t2: "鬥神翅膀", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-face", prefix: "CB", name: "戒指2", side: "side-left", cls: "c-face", h1: "① 入門選項", t1: "午夜的現身", h2: "② 畢業裝備", t2: "夕陽的現身(點強後的凝聚使用鐵砧)", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-cloth", prefix: "CI", name: "套服", side: "side-right", cls: "c-cloth", h1: "① 畢業裝備", t1: "強化的異世界系列屬性套服", h2: "② 畢業裝備(惡魔復仇者)", t2: "強化的LINE朋友系列套服：莎莉、兔兔、雷納德", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-glove", prefix: "CM", name: "手套", side: "side-right", cls: "c-glove", h1: "① 唯一選項", t1: "強化的LINE朋友系列手套", h2: "② 入門選項2", t2: "無其他推薦", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-ear", prefix: "CC", name: "戒指3", side: "side-left", cls: "c-ear", h1: "① 入門選項", t1: "愛情加速器", h2: "② 畢業裝備", t2: "點強後的凝聚帖到任意戒指", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-pendant", prefix: "CG", name: "耳環", side: "side-left", cls: "c-pendant", h1: "① 入門選項1", t1: "露希妲耳環", h2: "② 入門選項2", t2: "武士象徵", h3: "③ 畢業裝備", t3: "幸運草耳環(咖耳)" },
+            { id: "c-pants", prefix: "CJ", name: "褲子", side: "side-right", cls: "c-pants", h1: "① 入門選項1", t1: "無其他推薦", h2: "② 入門選項2", t2: "無其他推薦", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-shoes", prefix: "CN", name: "鞋子", side: "side-right", cls: "c-shoes", h1: "① 入門選項", t1: "任意真。異世界系列鞋子 10屬性/10AD/10AP", h2: "② 畢業裝備", t2: "覺醒立體機動裝置", h3: "③ 畢業裝備(惡魔復仇者)", t3: "強化的小櫻戰鬥鞋" },
+            { id: "c-tail", prefix: "CD", name: "戒指4", side: "side-left", cls: "c-tail", h1: "① 畢業裝備", t1: "凝聚的戒指", h2: "② 入門選項2", t2: "無其他推薦", h3: "③ 畢業裝備", t3: "無其他推薦" },
+            { id: "c-weapon", prefix: "CK", name: "武器", side: "side-right", cls: "c-weapon", h1: "① 入門選項", t1: "覺醒刀片", h2: "② 畢業裝備", t2: "強化閃耀音樂蔥", h3: "③ 畢業裝備(惡魔復仇者)", t3: "真月牙之刃/真黑暗之槌 20AD/20AP" },
+            { id: "c-shield", prefix: "CO", name: "副武", side: "side-right", cls: "c-shield", h1: "① 唯一選項", t1: "有屬性的透明盾牌(狗盾)", h2: "② 入門選項2", t2: "無其他推薦", h3: "③ 畢業裝備", t3: "無其他推薦" }
+        ];
 
-            const slotHtml = `
-                <div class="slot ${slot.cls} ${slot.side}" id="slot-${slot.id}">
-                    <div class="tooltip" onclick="event.stopPropagation();">
-                        <div class="tooltip-title">
-                            當前位置：<span>${slot.name} (${slot.prefix})</span>
-                            <span class="current-equipped" id="current-${slot.id}">未裝備</span>
-                        </div>
-                        <div class="options-container">
-                            ${opt1Html}
-                            ${opt2Html}
-                            ${opt3Html}
-                        </div>
+        // 生成格子的通用渲染函式
+        function renderSlots(dataArray, targetContainerId) {
+    const container = document.getElementById(targetContainerId);
+    dataArray.forEach(slot => {
+        // 自動檢查選項內容，若為 "無其他推薦" 則設為空字串，前端就不會顯示
+        const opt1Html = slot.t1 === "無其他推薦" ? "" : `
+            <div class="option-item tier-1" onclick="equipItem('${slot.id}', '${slot.t1}', '#aaaaaa', '${slot.prefix}-1.png')">
+                <span class="option-header">${slot.h1}</span>
+                <div class="option-body">
+                    <div class="option-img" style="background-image: url('${slot.prefix}-1.png');"></div>
+                    <div class="option-text">${slot.t1}</div>
+                </div>
+            </div>`;
+            
+        const opt2Html = slot.t2 === "無其他推薦" ? "" : `
+            <div class="option-item tier-2" onclick="equipItem('${slot.id}', '${slot.t2}', '#3498db', '${slot.prefix}-2.png')">
+                <span class="option-header">${slot.h2}</span>
+                <div class="option-body">
+                    <div class="option-img" style="background-image: url('${slot.prefix}-2.png');"></div>
+                    <div class="option-text">${slot.t2}</div>
+                </div>
+            </div>`;
+            
+        const opt3Html = slot.t3 === "無其他推薦" ? "" : `
+            <div class="option-item tier-3" onclick="equipItem('${slot.id}', '${slot.t3}', '#e74c3c', '${slot.prefix}-3.png')">
+                <span class="option-header">${slot.h3}</span>
+                <div class="option-body">
+                    <div class="option-img" style="background-image: url('${slot.prefix}-3.png');"></div>
+                    <div class="option-text">${slot.t3}</div>
+                </div>
+            </div>`;
+
+        const slotHtml = `
+            <div class="slot ${slot.cls} ${slot.side}" id="slot-${slot.id}">
+                <div class="tooltip" onclick="event.stopPropagation();">
+                    <div class="tooltip-title">
+                        當前位置：<span>${slot.name} (${slot.prefix})</span>
+                        <span class="current-equipped" id="current-${slot.id}">未裝備</span>
+                    </div>
+                    <div class="options-container">
+                        ${opt1Html}
+                        ${opt2Html}
+                        ${opt3Html}
                     </div>
                 </div>
-            `;
-            wrapper.insertAdjacentHTML('beforeend', slotHtml);
-        });
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', slotHtml);
+    });
+}
+
+        // 頁面初始化載入
+        renderSlots(slotData, 'tab-equip');
+        renderSlots(coordData, 'tab-coord');
 
         // 點擊選項時載入裝備
         function equipItem(slotId, itemName, borderColor, imgName) {
