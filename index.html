@@ -89,14 +89,13 @@
             z-index: 50;
         }
 
-        /* 被新裝備完整覆蓋的圖層 - 放大圖片並裁切掉灰色外殼，完美無縫填滿 */
+        /* 被新裝備完整覆蓋的圖層 */
         .slot .equipped-badge {
             position: absolute;
             top: -1px;
             left: -1px;
             right: -1px;
             bottom: -1px;
-            /* 背景圖片會由 JS 根據點選的選項動態塞入 (例如 A-1.png, B-3.png) */
             background-size: 124% 124%; 
             background-repeat: no-repeat;
             background-position: center 45%;
@@ -215,45 +214,40 @@
         /* ==========================================================
            24 個裝備格子完美對齊底圖坐標校正
            ========================================================== */
-        /* 左側直列 1 */
         .s-ring1 { top: 10.5%; left: 4.3%; }
         .s-pendant1 { top: 22.5%; left: 4.3%; }
         .s-ring2 { top: 34.5%; left: 4.3%; }
         .s-ring3 { top: 46.5%; left: 4.3%; }
         .s-belt { top: 58.5%; left: 4.3%; }
 
-        /* 左側直列 2 */
         .s-pocket { top: 10.5%; left: 17.5%; }
         .s-face { top: 22.5%; left: 17.5%; }
         .s-eye { top: 34.5%; left: 17.5%; }
         .s-earring { top: 46.5%; left: 17.5%; }
         .s-shoulder { top: 58.5%; left: 17.5%; }
 
-        /* 底部橫列 */
         .s-book { top: 70.5%; left: 4.3%; }
         .s-weapon { top: 58.5%; left: 30.5%; }
         .s-subweapon { top: 58.5%; left: 44%; }
         .s-emblem { top: 58.5%; left: 57%; }
 
-        /* 右側直列 1 */
         .s-hat { top: 10.5%; left: 70.2%; }
         .s-top { top: 22.5%; left: 70.2%; }
         .s-bottom { top: 34.5%; left: 70.2%; }
         .s-cape { top: 46.5%; left: 70.2%; }
         .s-badge { top: 58.5%; left: 70.2%; }
 
-        /* 右側直列 2 */
         .s-glove { top: 10.5%; left: 83.5%; }
         .s-shoe { top: 22.5%; left: 83.5%; }
         .s-empty-slot { top: 34.5%; left: 83.5%; }
         .s-android { top: 46.5%; left: 83.5%; }
         .s-heart { top: 58.5%; left: 83.5%; }
-        .s-medal { top: 68.9%; left: 83.5%; }
+        .s-medal { top: 70.5%; left: 83.5%; }
     </style>
 </head>
 <body>
 
-    <h1>新楓之谷全裝備新手配裝模擬器</h1>
+    <h1>新楓之谷裝備配裝引導模擬器</h1>
     <p>滑鼠移至任一裝備格，可點擊選單內的裝備方案來替換模擬</p>
 
     <div class="control-panel">
@@ -266,8 +260,7 @@
     <br>
 
     <div class="scale-container" id="scaleContainer">
-        <div class="equipment-wrapper" id="equipmentWrapper">
-            </div>
+        <div class="equipment-wrapper" id="equipmentWrapper"></div>
     </div>
 
     <script>
@@ -278,42 +271,168 @@
             buttonElement.classList.add('active');
         }
 
-        // 裝備資料庫：新增 prefix 欄位 (A 到 X)，用於自動尋找對應的圖片檔名
+        /* 裝備資料庫說明：
+           - 現在每個裝備新增了「h1, h2, h3」欄位，用來設定個別選單的頂端標題！
+           - 如果某個選項內容為 "無其他推薦"，系統會聰明地自動將該選項完全隱藏，不佔網頁空間。
+        */
         const slotData = [
-            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", t1: "活動戒指", t2: "頂級培羅德戒指", t3: "苦痛的根源" },
-            { id: "pendant1", prefix: "B", name: "項鍊 1", side: "side-left", cls: "s-pendant1", t1: "混沌雷之耳語", t2: "頂級培羅德烙印項鍊", t3: "魔導士項鍊" },
-            { id: "ring2", prefix: "C", name: "戒指 2", side: "side-left", cls: "s-ring2", t1: "銀花戒指", t2: "邁斯特戒指", t3: "巨大恐懼" },
-            { id: "ring3", prefix: "D", name: "戒指 3", side: "side-left", cls: "s-ring3", t1: "高貴伊菲雅戒指", t2: "天破/羅曼戒指", t3: "指揮官戒指" },
-            { id: "belt", prefix: "E", name: "腰帶", side: "side-left", cls: "s-belt", t1: "金草葉腰帶", t2: "頂級培羅德腰帶", t3: "夢幻腰帶" },
+            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", 
+              h1: "① 入門or選用配置", t1: "黎明守護者天使戒指", 
+              h2: "② 當前主流配置", t2: "巨大的恐懼", 
+              h3: "③ 畢業裝備", t3: "根源的耳語" },
             
-            { id: "pocket", prefix: "F", name: "口袋物品", side: "side-left", cls: "s-pocket", t1: "粉紅聖杯", t2: "凶獸意志", t3: "魔導士咒文書" },
-            { id: "face", prefix: "G", name: "臉飾", side: "side-left", cls: "s-face", t1: "凝結的結晶石", t2: "波賽頓紋身", t3: "米特拉的憤怒" },
-            { id: "eye", prefix: "H", name: "眼飾", side: "side-left", cls: "s-eye", t1: "水中鏡片", t2: "黑邊眼罩/波賽頓", t3: "魔導士眼罩" },
-            { id: "earring", prefix: "I", name: "耳環", side: "side-left", cls: "s-earring", t1: "迪亞雷斯耳環", t2: "頂級培羅德耳環", t3: "指揮官耳環" },
-            { id: "shoulder", prefix: "J", name: "肩飾", side: "side-left", cls: "s-shoulder", t1: "皇家黑金屬肩飾", t2: "神祕之影肩飾", t3: "永恆套裝肩飾" },
+            { id: "pendant1", prefix: "B", name: "戒指 2", side: "side-left", cls: "s-pendant1", 
+              h1: "① 入門or選用配置", t1: "屬性的戒指", 
+              h2: "② 當前主流配置", t2: "天上的氣息", 
+              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
             
-            { id: "book", prefix: "K", name: "特殊欄/底座", side: "side-left", cls: "s-book", t1: "一般特殊書", t2: "進階追真書", t3: "頂級特殊裝備" },
-            { id: "weapon", prefix: "L", name: "武器", side: "side-left", cls: "s-weapon", t1: "航海師武器", t2: "神祕之影武器", t3: "創世解封武器" },
-            { id: "subweapon", prefix: "M", name: "副武器", side: "side-right", cls: "s-subweapon", t1: "一般副武", t2: "楓之谷利刃/盾牌", t3: "進階米特拉副武" },
-            { id: "emblem", prefix: "N", name: "能源徽章", side: "side-right", cls: "s-emblem", t1: "黃金徽章", t2: "中階紋章", t3: "米特拉的能源" },
+            { id: "ring2", prefix: "C", name: "戒指 3", side: "side-left", cls: "s-ring2", 
+              h1: "① 塔戒擇一選用(搭配切換技能)", t1: "規範戒指(塔戒)", 
+              h2: "② 塔戒擇一選用(搭配切換技能)", t2: "永續戒指(塔戒)", 
+              h3: "③ 未來展望(改版)", t3: "恍惚的噩夢(未出)" },
             
-            { id: "hat", prefix: "O", name: "帽子", side: "side-right", cls: "s-hat", t1: "深淵帽子", t2: "神祕之影帽子", t3: "永恆套裝帽子" },
-            { id: "top", prefix: "P", name: "上衣", side: "side-right", cls: "s-top", t1: "深淵上衣", t2: "神祕之影(模擬)", t3: "永恆套裝上衣" },
-            { id: "bottom", prefix: "Q", name: "下衣", side: "side-right", cls: "s-bottom", t1: "深淵下衣", t2: "神祕之影(模擬)", t3: "永恆套裝下衣" },
-            { id: "cape", prefix: "R", name: "披風", side: "side-right", cls: "s-cape", t1: "航海師披風", t2: "神祕之影披風", t3: "永恆套裝披風" },
-            { id: "badge", prefix: "S", name: "徽章", side: "side-right", cls: "s-badge", t1: "水晶溫室", t2: "幽靈船徽章", t3: "創世/漆黑徽章" },
+            { id: "ring3", prefix: "D", name: "戒指 4", side: "side-left", cls: "s-ring3", 
+              h1: "① 入門過渡配置", t1: "強力的魔性戒指", 
+              h2: "② 當前主流頂配", t2: "頂級培羅德戒指 強化+30", 
+              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
             
-            { id: "glove", prefix: "T", name: "手套", side: "side-right", cls: "s-glove", t1: "航海師手套", t2: "神祕之影手套", t3: "永恆套裝手套" },
-            { id: "shoe", prefix: "U", name: "鞋子", side: "side-right", cls: "s-shoe", t1: "航海師鞋子", t2: "神祕之影鞋子", t3: "永恆套裝鞋子" },
-            { id: "empty-slot", prefix: "V", name: "外觀擴充格", side: "side-right", cls: "s-empty-slot", t1: "無過渡", t2: "外觀欄位", t3: "特殊功能擴充" },
-            { id: "android", prefix: "W", name: "機器人", side: "side-right", cls: "s-android", t1: "活動機器人", t2: "高級機器人", t3: "男爵/女爵心願機器人" },
-            { id: "heart", prefix: "X", name: "無法者心臟", side: "side-right", cls: "s-heart", t1: "鋰之心", t2: "鈦之心", t3: "無法者之心" },
-            { id: "medal", prefix: "Y", name: "勳章", side: "side-right", cls: "s-medal", t1: "七天怪公勳章", t2: "中階活動勳章", t3: "極限突破/神之子勳章" }
+            { id: "belt", prefix: "E", name: "腰帶", side: "side-left", cls: "s-belt", 
+              h1: "① 入門過渡配置", t1: "頂級培羅德腰帶", 
+              h2: "② 當前主流/畢業裝備", t2: "夢幻的腰帶", 
+              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
+            
+            { id: "pocket", prefix: "F", name: "臉飾", side: "side-left", cls: "s-pocket", 
+              h1: "① 入門or選用配置", t1: "暮光印記", 
+              h2: "② 當前主流配置", t2: "口紅控制器標誌", 
+              h3: "③ 未來展望", t3: "傲慢的原罪(未出)" },
+            
+            { id: "face", prefix: "G", name: "眼飾", side: "side-left", cls: "s-face", 
+              h1: "① 當前主流配置", t1: "附有魔力的眼罩", 
+              h2: "② 未來展望", t2: "飢餓血怨(未出)", 
+              h3: "③ 畢業裝備", t3: "無其他推薦" }, // 此項會自動隱藏
+            
+            { id: "eye", prefix: "H", name: "耳環", side: "side-left", cls: "s-eye", 
+              h1: "① 入門配置 1", t1: "星耀耳環", 
+              h2: "② 入門配置 2", t2: "頂級培羅德耳環", 
+              h3: "③ 當前主流/畢業裝備", t3: "指揮官力量耳環" },
+            
+            { id: "earring", prefix: "I", name: "項鍊 1", side: "side-left", cls: "s-earring", 
+              h1: "① 入門過渡配置", t1: "破曉墜飾", 
+              h2: "② 當前主流/畢業裝備", t2: "苦痛的根源", 
+              h3: "③ 套裝搭配首選", t3: "頂級培羅德項鍊 強化+30" },
+            
+            { id: "shoulder", prefix: "J", name: "項鍊 2", side: "side-left", cls: "s-shoulder", 
+              h1: "① 選用配置", t1: "死神的項鍊", 
+              h2: "② 套裝搭配首選", t2: "頂級培羅德項鍊 強化+30", 
+              h3: "③ 畢業裝備", t3: "死亡之誓" },
+            
+            { id: "book", prefix: "K", name: "口袋道具", side: "side-left", cls: "s-book", 
+              h1: "① 入門配置 1", t1: "查。克羅斯", 
+              h2: "② 入門配置 2", t2: "四個碎片的橘子裝飾", 
+              h3: "③ 當前主流/畢業裝備", t3: "四色魔島書" },
+            
+            { id: "weapon", prefix: "L", name: "主武器", side: "side-left", cls: "s-weapon", 
+              h1: "① 入門高CP值", t1: "神秘武器系列", 
+              h2: "② 當前主流配置", t2: "創世武器系列", 
+              h3: "③ 畢業裝備", t3: "命運武器系列" },
+            
+            { id: "subweapon", prefix: "M", name: "副武器", side: "side-right", cls: "s-subweapon", 
+              h1: "① 入門配置", t1: "100級副武系列", 
+              h2: "② 當前主流配置", t2: "140級濃姬附武系列", 
+              h3: "③ 未來頂配展望", t3: "200級星界附武系列(未出)" },
+            
+            { id: "emblem", prefix: "N", name: "能源/徽章", side: "side-right", cls: "s-emblem", 
+              h1: "① 入門配置 1", t1: "職業黃金徽章", 
+              h2: "② 入門配置 2", t2: "覺醒的記憶徽章", 
+              h3: "③ 畢業裝備", t3: "米特拉的憤怒" },
+            
+            { id: "hat", prefix: "O", name: "帽子", side: "side-right", cls: "s-hat", 
+              h1: "① 選用裝備", t1: "露塔必思(深淵)帽子系列", 
+              h2: "② 新手配置", t2: "神祕冥界帽子系列", 
+              h3: "③ 當前主流/畢業裝備", t3: "永恆帽子系列" },
+            
+            { id: "top", prefix: "P", name: "上衣", side: "side-right", cls: "s-top", 
+              h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", 
+              h2: "② 選用裝備", t2: "露塔必思(深淵)上衣系列", 
+              h3: "③ 當前主流/畢業裝備", t3: "永恆上衣系列" },
+            
+            { id: "bottom", prefix: "Q", name: "褲/裙", side: "side-right", cls: "s-bottom", 
+              h1: "① 入門配置", t1: "滅龍騎士盔甲(固定套服)", 
+              h2: "② 選用裝備", t2: "露塔必思(深淵)褲子系列", 
+              h3: "③ 當前主流/畢業裝備", t3: "永恆褲子系列" },
+            
+            { id: "cape", prefix: "R", name: "肩膀裝飾", side: "side-right", cls: "s-cape", 
+              h1: "① 選用裝備", t1: "航海師護肩系列", 
+              h2: "② 入門配置", t2: "神秘冥界護肩系列", 
+              h3: "③ 當前主流/畢業裝備", t3: "永恆肩膀系列" },
+            
+            { id: "badge", prefix: "S", name: "機器人", side: "side-right", cls: "s-badge", 
+              h1: "① 外觀自由搭配", t1: "任選機器人", 
+              h2: "② 外觀自由搭配", t2: "任選機器人", 
+              h3: "③ 外觀自由搭配", t3: "任選機器人" },
+            
+            { id: "glove", prefix: "T", name: "披風", side: "side-right", cls: "s-glove", 
+              h1: "① 選用裝備", t1: "航海師斗篷系列", 
+              h2: "② 當前主流裝備", t2: "神祕冥界斗篷系列", 
+              h3: "③ 畢業裝備", t3: "永恆斗篷系列" },
+            
+            { id: "shoe", prefix: "U", name: "手套", side: "side-right", cls: "s-shoe", 
+              h1: "① 選用裝備", t1: "航海師手套系列", 
+              h2: "② 當前主流裝備", t2: "神祕冥界手套系列", 
+              h3: "③ 畢業裝備", t3: "永恆手套系列" },
+            
+            { id: "empty-slot", prefix: "V", name: "鞋子", side: "side-right", cls: "s-empty-slot", 
+              h1: "① 選用裝備", t1: "航海師鞋子系列", 
+              h2: "② 當前主流裝備", t2: "神祕冥界鞋子系列", 
+              h3: "③ 畢業裝備", t3: "永恆鞋子系列" },
+            
+            { id: "android", prefix: "W", name: "勳章", side: "side-right", cls: "s-android", 
+              h1: "① 階段一", t1: "喵喵天使強化+10", 
+              h2: "② 階段二", t2: "轉移公會勳章", 
+              h3: "③ 階段三", t3: "轉移不朽的遺產" },
+            
+            { id: "heart", prefix: "X", name: "機器心臟", side: "side-right", cls: "s-heart", 
+              h1: "① 高CP值裝備", t1: "女武神心臟", 
+              h2: "② 高階過渡配置", t2: "M-DAY心臟", 
+              h3: "③ 畢業裝備", t3: "全面控制核心" },
+            
+            { id: "medal", prefix: "Y", name: "胸章", side: "side-right", cls: "s-medal", 
+              h1: "① 階段一", t1: "VIP修菲凱曼的黃金胸章", 
+              h2: "② 階段二", t2: "轉移創世的胸章", 
+              h3: "③ 畢業裝備", t3: "無其他推薦" } // 此項會自動隱藏
         ];
 
         const wrapper = document.getElementById('equipmentWrapper');
         
         slotData.forEach(slot => {
+            // 檢查選項內容是否為 "無其他推薦"，如果是，將該選項的 HTML 設為空字串，後面就不會顯示
+            const opt1Html = slot.t1 === "無其他推薦" ? "" : `
+                <div class="option-item tier-1" onclick="equipItem('${slot.id}', '${slot.t1}', '#aaaaaa', '${slot.prefix}-1.png')">
+                    <span class="option-header">${slot.h1}</span>
+                    <div class="option-body">
+                        <div class="option-img" style="background-image: url('${slot.prefix}-1.png');"></div>
+                        <div class="option-text">${slot.t1}</div>
+                    </div>
+                </div>`;
+                
+            const opt2Html = slot.t2 === "無其他推薦" ? "" : `
+                <div class="option-item tier-2" onclick="equipItem('${slot.id}', '${slot.t2}', '#3498db', '${slot.prefix}-2.png')">
+                    <span class="option-header">${slot.h2}</span>
+                    <div class="option-body">
+                        <div class="option-img" style="background-image: url('${slot.prefix}-2.png');"></div>
+                        <div class="option-text">${slot.t2}</div>
+                    </div>
+                </div>`;
+                
+            const opt3Html = slot.t3 === "無其他推薦" ? "" : `
+                <div class="option-item tier-3" onclick="equipItem('${slot.id}', '${slot.t3}', '#e74c3c', '${slot.prefix}-3.png')">
+                    <span class="option-header">${slot.h3}</span>
+                    <div class="option-body">
+                        <div class="option-img" style="background-image: url('${slot.prefix}-3.png');"></div>
+                        <div class="option-text">${slot.t3}</div>
+                    </div>
+                </div>`;
+
             const slotHtml = `
                 <div class="slot ${slot.cls} ${slot.side}" id="slot-${slot.id}">
                     <div class="tooltip" onclick="event.stopPropagation();">
@@ -322,27 +441,9 @@
                             <span class="current-equipped" id="current-${slot.id}">未裝備</span>
                         </div>
                         <div class="options-container">
-                            <div class="option-item tier-1" onclick="equipItem('${slot.id}', '${slot.t1}', '#aaaaaa', '${slot.prefix}-1.png')">
-                                <span class="option-header">① 入門小資首選</span>
-                                <div class="option-body">
-                                    <div class="option-img" style="background-image: url('${slot.prefix}-1.png');"></div>
-                                    <div class="option-text">${slot.t1}</div>
-                                </div>
-                            </div>
-                            <div class="option-item tier-2" onclick="equipItem('${slot.id}', '${slot.t2}', '#3498db', '${slot.prefix}-2.png')">
-                                <span class="option-header">② 主流中階配置</span>
-                                <div class="option-body">
-                                    <div class="option-img" style="background-image: url('${slot.prefix}-2.png');"></div>
-                                    <div class="option-text">${slot.t2}</div>
-                                </div>
-                            </div>
-                            <div class="option-item tier-3" onclick="equipItem('${slot.id}', '${slot.t3}', '#e74c3c', '${slot.prefix}-3.png')">
-                                <span class="option-header">③ 畢業進階目標</span>
-                                <div class="option-body">
-                                    <div class="option-img" style="background-image: url('${slot.prefix}-3.png');"></div>
-                                    <div class="option-text">${slot.t3}</div>
-                                </div>
-                            </div>
+                            ${opt1Html}
+                            ${opt2Html}
+                            ${opt3Html}
                         </div>
                     </div>
                 </div>
@@ -350,7 +451,7 @@
             wrapper.insertAdjacentHTML('beforeend', slotHtml);
         });
 
-        // 點擊選項時，會自動傳入該裝備對應的圖片名稱 (imgName)
+        // 點擊選項時載入裝備
         function equipItem(slotId, itemName, borderColor, imgName) {
             const slotDiv = document.getElementById(`slot-${slotId}`);
             const oldBadge = slotDiv.querySelector('.equipped-badge');
@@ -359,7 +460,6 @@
             const badge = document.createElement('div');
             badge.className = 'equipped-badge';
             badge.style.borderColor = borderColor; 
-            // 讓覆蓋圖層完美載入該編號的圖片
             badge.style.backgroundImage = `url('${imgName}')`;
             
             const nameSpan = document.createElement('span');
