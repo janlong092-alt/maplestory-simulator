@@ -198,7 +198,7 @@
         .tooltip {
             display: none;
             position: absolute;
-            width: 260px;
+            width: max-content; /* 改為自動適應內容寬度 */
             background-color: var(--tooltip-bg);
             border: 1px solid var(--tooltip-border);
             border-radius: 8px;
@@ -226,11 +226,15 @@
         .tooltip-title span { color: var(--highlight); }
         .current-equipped { font-size: 11px; color: #00ffbc; margin-top: 2px; display: block;}
 
-        .options-container { width: 100%; }
-
+        .options-container { 
+            display: grid;
+            grid-template-rows: repeat(5, auto); /* 設定垂直方向最多 5 列 */
+            grid-auto-flow: column; /* 滿 5 列後自動向右新增欄位 */
+            gap: 8px; /* 設定每個選項之間的間距 */
+        }
         .option-item {
-            width: 100%;
-            margin-bottom: 8px;
+            width: 240px; /* 固定單一選項的寬度 */
+            margin-bottom: 0; /* 移除原本的 margin，改用 grid 的 gap 處理 */
             font-size: 12px;
             background: var(--option-bg);
             padding: 8px;
@@ -247,14 +251,34 @@
         }
         .option-item:last-child { margin-bottom: 0; }
         
+        /* 原有的 Tier 1~3 */
         .option-item.tier-1 { border-left-color: #aaa; } 
         .option-item.tier-2 { border-left-color: #3498db; } 
         .option-item.tier-3 { border-left-color: #e74c3c; } 
+        
+        /* === 新增 Tier 4、5 的邊框顏色 === */
+        .option-item.tier-4 { border-left-color: #2ecc71; } /* 綠色 */
+        .option-item.tier-5 { border-left-color: #9b59b6; } /* 紫色 */
+		.option-item.tier-6 { border-left-color: #9b59b6; }
+		.option-item.tier-7 { border-left-color: #9b59b6; }
+		.option-item.tier-8 { border-left-color: #9b59b6; }
+		.option-item.tier-9 { border-left-color: #9b59b6; }
+		.option-item.tier-10 { border-left-color: #9b59b6; }
 
+        /* 原有的 Tier 1~3 標題顏色 */
         .option-header { font-weight: bold; margin-bottom: 4px; display: block; }
         .tier-1 .option-header { color: #bbb; }
         .tier-2 .option-header { color: #5dade2; }
         .tier-3 .option-header { color: #f1948a; }
+        
+        /* === 新增 Tier 4、5 的標題顏色 === */
+        .tier-4 .option-header { color: #58d68d; } 
+        .tier-5 .option-header { color: #bb8fce; }
+		.tier-6 .option-header { color: #bb8fce; }
+		.tier-7 .option-header { color: #bb8fce; }
+		.tier-8 .option-header { color: #bb8fce; }
+		.tier-9 .option-header { color: #bb8fce; }
+		.tier-10 .option-header { color: #bb8fce; }
 
         .option-body { display: flex; width: 100%; }
         
@@ -336,7 +360,8 @@
 
     <div class="control-panel">
         <label>模擬器縮放：</label>
-        <input type="range" id="scaleSlider" min="1.2" max="2.2" step="0.1" value="1.2" oninput="changeScale(this.value)">
+        <!-- 將 min 改為 1.0 (100%)，max 改為 2.0 (200%)，value 保持 1.2 (120%) -->
+        <input type="range" id="scaleSlider" min="1.0" max="2.0" step="0.1" value="1.2" oninput="changeScale(this.value)">
         <span id="scaleValue">120%</span>
         
         <button onclick="toggleTheme()">切換亮/暗模式</button>
@@ -380,17 +405,41 @@
         // ==========================================================
         // [裝備與時裝資料庫]
         // ==========================================================
+		const ringOptions = {
+            h1: "① 入門配置", t1: "黎明守護者天使戒指", 
+            h2: "② 入門配置", t2: "屬性的戒指", 
+            h3: "③ 選用配置", t3: "強力的魔性戒指", 
+            h4: "④ 當前主流配置", t4: "巨大的恐懼", 
+            h5: "⑤ 套裝搭配首選", t5: "頂級培羅德戒指 強化+30", 
+            h6: "⑥ 保命與安全性", t6: "天上的氣息", 
+            h7: "⑦ 塔戒", t7: "規範戒指or永續戒指", 
+            h8: "⑧ 頂級配置", t8: "根源的耳語", 
+            h9: "⑨ 頂級配置", t9: "恍惚的噩夢"
+        };
+		
+		// === 新增：統整後的項鍊選項 ===
+        const pendantOptions = {
+            h1: "① 入門配置", t1: "破曉墜飾", 
+            h2: "② 保命與安全性", t2: "死神的項鍊", 
+            h3: "③ 套裝搭配首選", t3: "頂級培羅德項鍊 強化+30", 
+            h4: "④ 當前主流配置", t4: "苦痛的根源", 
+            h5: "⑤ 頂級配置", t5: "死亡之誓"
+        };
+		
         const slotData = [
-            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", h1: "① 入門or選用配置", t1: "黎明守護者天使戒指", h2: "② 當前主流配置", t2: "巨大的恐懼", h3: "③ 畢業裝備", t3: "無其他推薦" },
-            { id: "pendant1", prefix: "B", name: "戒指 2", side: "side-left", cls: "s-pendant1", h1: "① 入門or選用配置", t1: "屬性的戒指", h2: "② 當前主流配置", t2: "天上的氣息", h3: "③ 畢業裝備", t3: "無其他推薦" },
-            { id: "ring2", prefix: "C", name: "戒指 3", side: "side-left", cls: "s-ring2", h1: "① 塔戒擇一選用(搭配切換可裝備另一顆塔戒)", t1: "規範戒指or永續戒指", h2: "② 套裝搭配首選", t2: "頂級培羅德戒指 強化+30", h3: "③ 未來展望(改版)", t3: "恍惚的噩夢(未出)" },
-            { id: "ring3", prefix: "D", name: "戒指 4", side: "side-left", cls: "s-ring3", h1: "① 入門過渡配置", t1: "強力的魔性戒指", h2: "② 當前主流頂配 1", t2: "頂級培羅德戒指 強化+30", h3: "③ 當前主流頂配 2", t3: "根源的耳語" },
+            // 將原本的四個戒指替換為以下寫法，它們會自動繼承上面的 9 個選項
+            { id: "ring1", prefix: "A", name: "戒指 1", side: "side-left", cls: "s-ring1", ...ringOptions },
+            { id: "pendant1", prefix: "A", name: "戒指 2", side: "side-left", cls: "s-pendant1", ...ringOptions },
+            { id: "ring2", prefix: "A", name: "戒指 3", side: "side-left", cls: "s-ring2", ...ringOptions },
+            { id: "ring3", prefix: "A", name: "戒指 4", side: "side-left", cls: "s-ring3", ...ringOptions },
+            
+            // ... 底下保留原本的 belt, pocket 等其他裝備不變
             { id: "belt", prefix: "E", name: "腰帶", side: "side-left", cls: "s-belt", h1: "① 入門過渡配置", t1: "頂級培羅德腰帶", h2: "② 當前主流/畢業裝備", t2: "夢幻的腰帶", h3: "③ 畢業裝備", t3: "無其他推薦" },
             { id: "pocket", prefix: "F", name: "臉飾", side: "side-left", cls: "s-pocket", h1: "① 入門or選用配置", t1: "暮光印記", h2: "② 當前主流配置", t2: "口紅控制器標誌", h3: "③ 未來展望", t3: "傲慢的原罪(未出)" },
             { id: "face", prefix: "G", name: "眼飾", side: "side-left", cls: "s-face", h1: "① 當前主流配置", t1: "附有魔力的眼罩", h2: "② 未來展望", t2: "飢餓血怨(未出)", h3: "③ 畢業裝備", t3: "無其他推薦" },
             { id: "eye", prefix: "H", name: "耳環", side: "side-left", cls: "s-eye", h1: "① 入門配置 1", t1: "星耀耳環", h2: "② 入門配置 2", t2: "頂級培羅德耳環", h3: "③ 當前主流/畢業裝備", t3: "指揮官力量耳環" },
-            { id: "earring", prefix: "I", name: "項鍊 1", side: "side-left", cls: "s-earring", h1: "① 入門過渡配置", t1: "破曉墜飾", h2: "② 當前主流/畢業裝備", t2: "苦痛的根源", h3: "③ 套裝搭配首選", t3: "頂級培羅德項鍊 強化+30" },
-            { id: "shoulder", prefix: "J", name: "項鍊 2", side: "side-left", cls: "s-shoulder", h1: "① 選用配置", t1: "死神的項鍊", h2: "② 套裝搭配首選", t2: "頂級培羅德項鍊 強化+30", h3: "③ 畢業裝備", t3: "死亡之誓" },
+            { id: "earring", prefix: "I", name: "項鍊 1", side: "side-left", cls: "s-earring", ...pendantOptions },
+            { id: "shoulder", prefix: "I", name: "項鍊 2", side: "side-left", cls: "s-shoulder", ...pendantOptions },
             { id: "book", prefix: "K", name: "口袋道具", side: "side-left", cls: "s-book", h1: "① 入門配置 1", t1: "查。克羅斯", h2: "② 入門配置 2", t2: "四個碎片的橘子裝飾", h3: "③ 當前主流/畢業裝備", t3: "四色魔島書" },
             { id: "weapon", prefix: "L", name: "主武器", side: "side-left", cls: "s-weapon", h1: "① 入門高CP值", t1: "神秘武器系列", h2: "② 當前主流配置", t2: "創世武器系列", h3: "③ 畢業裝備", t3: "命運武器系列" },
             { id: "subweapon", prefix: "M", name: "副武器", side: "side-right", cls: "s-subweapon", h1: "① 入門配置", t1: "100級副武系列", h2: "② 當前主流配置", t2: "140級濃姬附武系列", h3: "③ 未來頂配展望", t3: "200級星界附武系列(未出)" },
@@ -431,33 +480,33 @@
         // ==========================================================
         function renderSlots(dataArray, targetContainerId) {
             const container = document.getElementById(targetContainerId);
+            
+            // 定義對應階層的邊框顏色，用來傳給 equipItem 裝備後的標籤顏色
+            const tierColors = ['#aaaaaa', '#3498db', '#e74c3c', '#2ecc71', '#9b59b6'];
+
             dataArray.forEach(slot => {
-                const opt1Html = slot.t1 === "無其他推薦" ? "" : `
-                    <div class="option-item tier-1" onclick="equipItem('${slot.id}', '${slot.t1}', '#aaaaaa', '${slot.prefix}-1.png')">
-                        <span class="option-header">${slot.h1}</span>
-                        <div class="option-body">
-                            <div class="option-img" style="background-image: url('${slot.prefix}-1.png');"></div>
-                            <div class="option-text">${slot.t1}</div>
-                        </div>
-                    </div>`;
-                    
-                const opt2Html = slot.t2 === "無其他推薦" ? "" : `
-                    <div class="option-item tier-2" onclick="equipItem('${slot.id}', '${slot.t2}', '#3498db', '${slot.prefix}-2.png')">
-                        <span class="option-header">${slot.h2}</span>
-                        <div class="option-body">
-                            <div class="option-img" style="background-image: url('${slot.prefix}-2.png');"></div>
-                            <div class="option-text">${slot.t2}</div>
-                        </div>
-                    </div>`;
-                    
-                const opt3Html = slot.t3 === "無其他推薦" ? "" : `
-                    <div class="option-item tier-3" onclick="equipItem('${slot.id}', '${slot.t3}', '#e74c3c', '${slot.prefix}-3.png')">
-                        <span class="option-header">${slot.h3}</span>
-                        <div class="option-body">
-                            <div class="option-img" style="background-image: url('${slot.prefix}-3.png');"></div>
-                            <div class="option-text">${slot.t3}</div>
-                        </div>
-                    </div>`;
+                let optionsHtml = '';
+                let i = 1;
+
+                // 動態檢查 t1, t2, t3, t4... 是否存在，只要存在就繼續生成
+                while (slot['t' + i] !== undefined) {
+                    if (slot['t' + i] !== "無其他推薦") {
+                        // 計算要套用第幾個 tier 的樣式 (超過 5 個則循環使用顏色)
+                        let colorIndex = (i - 1) % tierColors.length;
+                        let borderColor = tierColors[colorIndex];
+                        let tierClass = 'tier-' + ((i - 1) % 5 + 1);
+
+                        optionsHtml += `
+                            <div class="option-item ${tierClass}" onclick="equipItem('${slot.id}', '${slot['t'+i]}', '${borderColor}', '${slot.prefix}-${i}.png')">
+                                <span class="option-header">${slot['h'+i]}</span>
+                                <div class="option-body">
+                                    <div class="option-img" style="background-image: url('${slot.prefix}-${i}.png');"></div>
+                                    <div class="option-text">${slot['t'+i]}</div>
+                                </div>
+                            </div>`;
+                    }
+                    i++; // 推進到下一個數字 (2, 3, 4...)
+                }
 
                 const slotHtml = `
                     <div class="slot ${slot.cls} ${slot.side}" id="slot-${slot.id}">
@@ -467,9 +516,7 @@
                                 <span class="current-equipped" id="current-${slot.id}">未裝備</span>
                             </div>
                             <div class="options-container">
-                                ${opt1Html}
-                                ${opt2Html}
-                                ${opt3Html}
+                                ${optionsHtml}
                             </div>
                         </div>
                     </div>
@@ -477,6 +524,20 @@
                 container.insertAdjacentHTML('beforeend', slotHtml);
             });
         }
+
+        // 定義哪些 ID 屬於戒指欄位，並建立狀態追蹤物件
+        const ringIds = ['ring1', 'pendant1', 'ring2', 'ring3'];
+        const equippedRings = { ring1: null, pendant1: null, ring2: null, ring3: null };
+		const exclusiveGroups = {
+            rings: {
+                ids: ['ring1', 'pendant1', 'ring2', 'ring3'],
+                state: { ring1: null, pendant1: null, ring2: null, ring3: null }
+            },
+            pendants: {
+                ids: ['earring', 'shoulder'],
+                state: { earring: null, shoulder: null }
+            }
+        };
 
         function equipItem(slotId, itemName, borderColor, imgName) {
             const slotDiv = document.getElementById(`slot-${slotId}`);
@@ -494,6 +555,38 @@
             
             slotDiv.appendChild(badge);
             document.getElementById(`current-${slotId}`).innerText = `已裝備：${itemName}`;
+
+            // === 檢查該裝備是否屬於排他群組 ===
+            if (exclusiveGroups.rings.ids.includes(slotId)) {
+                exclusiveGroups.rings.state[slotId] = itemName;
+                updateExclusiveOptions(exclusiveGroups.rings);
+            } else if (exclusiveGroups.pendants.ids.includes(slotId)) {
+                exclusiveGroups.pendants.state[slotId] = itemName;
+                updateExclusiveOptions(exclusiveGroups.pendants);
+            }
+        }
+
+        // === 通用的排他選項更新函數 ===
+        function updateExclusiveOptions(groupData) {
+            // 取得該群組中已經裝備的「非 null」物品名稱陣列
+            const usedItems = Object.values(groupData.state).filter(item => item !== null);
+
+            groupData.ids.forEach(id => {
+                const slotDiv = document.getElementById(`slot-${id}`);
+                if (!slotDiv) return;
+
+                const options = slotDiv.querySelectorAll('.option-item');
+                options.forEach(opt => {
+                    const itemName = opt.querySelector('.option-text').innerText;
+                    
+                    // 如果這個物品已被同群組選走，且不是當前這格自己裝備的，就隱藏它
+                    if (usedItems.includes(itemName) && groupData.state[id] !== itemName) {
+                        opt.style.display = 'none';
+                    } else {
+                        opt.style.display = ''; // 恢復顯示
+                    }
+                });
+            });
         }
 
         // 頁面初始化載入
